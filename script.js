@@ -5,8 +5,6 @@ let imagebtn=document.querySelector("#image")
 let image=document.querySelector("#image img")
 let imageinput=document.querySelector("#image input")
 
-const Api_Url="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AQ.Ab8RN6IWgSAS0SuD5y8gKf8uNvB8tawGuO53buLHIpzw1g8oMw"
-
 let user={
     message:null,
     file:{
@@ -29,22 +27,31 @@ let text=aiChatBox.querySelector(".ai-chat-area")
             }]
         })
     }
-    try {
-  let response = await fetch(Api_Url, RequestOption)
-  let data = await response.json()
-  console.log("API Raw Response:", data)  // ADD THIS LINE
-  if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-    let apiResponse = data.candidates[0].content.parts[0].text
-      .replace(/\*\*(.*?)\*\*/g, "$1")
-      .trim()
-    text.innerHTML = apiResponse
-  } else {
-    text.innerHTML = "❌ No response or unexpected format from Gemini."
-  }
+  try {
+    let response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            message: user.message
+        })
+    });
+
+    let data = await response.json();
+
+    if (data.reply) {
+        text.innerHTML = data.reply
+            .replace(/\\(.?)\\*/g, "$1")
+            .trim();
+    } else {
+        text.innerHTML = "❌ " + (data.error || "No response");
+    }
+
 } catch (error) {
-  console.error("Fetch error:", error)
-  text.innerHTML = "❌ Error fetching response. Check console."
-}  
+    console.error(error);
+    text.innerHTML = "❌ Backend Error";
+}
     
     finally{
         chatContainer.scrollTo({top:chatContainer.scrollHeight,behavior:"smooth"})
